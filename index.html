@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Аеропорт SKYPORT</title>
+
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h2>✈ SKYPORT</h2>
+        <p>Лабораторна робота №5 · JavaScript</p>
+    </header>
+
+    <main>
+        <section class="intro">
+            <p class="subtitle">ІНТЕРАКТИВНИЙ АЕРОПОРТ</p>
+            <h1>Наступна зупинка — небо!</h1>
+            <p>Запускай літак і керуй його польотом.</p>
+        </section>
+
+        <section class="airport">
+            <div class="flight-heading">
+                <h2>Рейс UK 011</h2>
+                <p id="status" role="status">Готовий до зльоту</p>
+            </div>
+
+            <div id="scene">
+                <div class="sun"></div>
+
+                <div class="cloud cloud-one">☁</div>
+                <div class="cloud cloud-two">☁</div>
+
+                <div class="terminal">
+                    SKYPORT
+                    <div class="windows">▦ ▦ ▦</div>
+                </div>
+
+                <div class="runway"></div>
+
+                <div id="plane" role="img" aria-label="Літак">
+                    ✈
+                </div>
+            </div>
+
+            <div class="flight-info">
+                <p>Прогрес польоту: <strong id="progress">0%</strong></p>
+                <p>Навчальна симуляція</p>
+            </div>
+
+            <div id="progressBar" class="progress-bar" role="progressbar" aria-label="Прогрес польоту" aria-valuemin="0"
+                aria-valuemax="100" aria-valuenow="0">
+                <div id="progressFill"></div>
+            </div>
+
+            <div class="controls">
+                <button id="startButton" type="button">
+                    ▶ Почати
+                </button>
+
+                <button id="pauseButton" type="button" disabled>
+                    Ⅱ Пауза
+                </button>
+
+                <button id="resetButton" type="button">
+                    ↺ Спочатку
+                </button>
+
+                <label for="speed">
+                    Швидкість:
+                </label>
+
+                <select id="speed">
+                    <option value="0.5">×0.5</option>
+                    <option value="1" selected>×1</option>
+                    <option value="2">×2</option>
+                    <option value="3">×3</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="description">
+            <h2>Як працює сторінка?</h2>
+            <p>
+                JavaScript змінює координати літака,
+                оновлює прогрес і реагує на натискання кнопок.
+                Після розгону літак поступово набирає висоту.
+            </p>
+        </section>
+        <section class="description">
+            <h2>Бонусне завдання — мінігра</h2>
+
+            <p>
+                Спробуй себе в ролі пілота:
+                спрямуй літак на злітну смугу.
+            </p>
+
+            <a href="game.html">✈ Грати в «Посади літак»</a>
+        </section>
+        <p>
+    </main>
+
+    <footer>
+        Аеропорт SKYPORT · Веб-технології · 2026
+    </footer>
+</body>
+
+</html>

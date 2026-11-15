@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKYPORT — Посади літак</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #edf3f7;
+            color: #17364d;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        main {
+            max-width: 650px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            line-height: 1.6;
+        }
+
+        .panel {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+        }
+
+        #field {
+            position: relative;
+            height: 420px;
+            overflow: hidden;
+            border: 3px solid #17364d;
+            border-radius: 15px;
+            background: linear-gradient(#a5d6ed 0%,
+                    #e5f5fc 80%,
+                    #95bd82 80%);
+        }
+
+        .cloud {
+            position: absolute;
+            color: white;
+            font-size: 65px;
+        }
+
+        .cloud-one {
+            top: 40px;
+            left: 12%;
+        }
+
+        .cloud-two {
+            top: 130px;
+            right: 12%;
+        }
+
+        #runway {
+            position: absolute;
+            bottom: 0;
+            width: 110px;
+            height: 55px;
+            background: #465362;
+            border: 3px solid white;
+        }
+
+        #runway::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0;
+            height: 100%;
+            border-left: 3px dashed white;
+        }
+
+        #plane {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 44px;
+            height: 44px;
+            color: #163b64;
+            font-size: 40px;
+            line-height: 44px;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button,
+        a {
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 8px;
+            background: #17364d;
+            color: white;
+            font: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline: 3px solid #e9a52c;
+            outline-offset: 3px;
+        }
+
+        #message {
+            min-height: 52px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>✈ Посади літак</h1>
+
+        <p>
+            Керуй стрілками ← → або кнопками під грою.
+            У момент посадки літак має повністю
+            опинитися над сірою смугою.
+        </p>
+
+        <div class="panel">
+            <span>Посадки: <strong id="score">0</strong></span>
+            <span>Спроби: <strong id="lives">3</strong></span>
+        </div>
+
+        <div id="field" aria-label="Ігрове поле">
+            <span class="cloud cloud-one">☁</span>
+            <span class="cloud cloud-two">☁</span>
+
+            <div id="runway"></div>
+            <div id="plane" role="img" aria-label="Літак">✈</div>
+        </div>
+
+        <p id="message" role="status">
+            Натисни «Почати гру».
+        </p>
+
+        <div class="buttons">
+            <button id="start" type="button">Почати гру</button>
+            <button id="left" type="button" disabled>← Ліворуч</button>
+            <button id="right" type="button" disabled>Праворуч →</button>
+            <a href="index.html">До аеропорту</a>
+        </div>
+    </main>
+
+    <script>
+        // Елементи сторінки.
+        const field = document.getElementById("field");
+        const plane = document.getElementById("plane");
+        const runway = document.getElementById("runway");
+
+        const scoreText = document.getElementById("score");
+        const livesText = document.getElementById("lives");
+        const message = document.getElementById("message");
+
+        const startButton = document.getElementById("start");
+        const leftButton = document.getElementById("left");
+        const rightButton = document.getElementById("right");
+
+        // Стан гри.
+        let x = 0;
+        let y = 0;
+        let runwayX = 0;
+        let score = 0;
+        let lives = 3;
+        let running = false;
+        let lastTime = null;
+        let frameId = null;
+
+        const keys = {
+            left: false,
+            right: false
+        };
+
+        // Малюємо нові координати через CSS.
+        function render() {
+            plane.style.transform = `translate(${x}px, ${y}px)`;
+            runway.style.left = `${runwayX}px`;
+
+            scoreText.textContent = score;
+            livesText.textContent = lives;
+        }
+
+        // Готуємо наступну посадку.
+        function newRound() {
+            const maxRunwayX = field.clientWidth - runway.offsetWidth;
+
+            runwayX = Math.random() * Math.max(0, maxRunwayX);
+            x = (field.clientWidth - plane.offsetWidth) / 2;
+            y = 0;
+
+            render();
+        }
+
+        // Зміщення літака з обмеженням краями поля.
+        function movePlane(distance) {
+            if (!running) {
+                return;
+            }
+
+            const maxX = field.clientWidth - plane.offsetWidth;
+
+            x = Math.max(0, Math.min(maxX, x + distance));
+            render();
+        }
+
+        function finishGame() {
+            running = false;
+            frameId = null;
+
+            leftButton.disabled = true;
+            rightButton.disabled = true;
+            startButton.textContent = "Грати знову";
+
+            message.textContent =
+                `Гру завершено! Успішних посадок: ${score}.`;
+        }
+
+        // Один кадр гри.
+        function update(time) {
+            if (!running) {
+                return;
+            }
+
+            if (lastTime === null) {
+                lastTime = time;
+            }
+
+            // Час у секундах. Обмеження запобігає різким стрибкам.
+            const delta = Math.min((time - lastTime) / 1000, 0.05);
+            lastTime = time;
+
+            if (keys.left) {
+                movePlane(-260 * delta);
+            }
+
+            if (keys.right) {
+                movePlane(260 * delta);
+            }
+
+            // Після кожної успішної посадки швидкість зростає.
+            const fallSpeed = Math.min(150, 55 + score * 8);
+            y = y + fallSpeed * delta;
+
+            const landingY = runway.offsetTop - plane.offsetHeight;
+
+            if (y >= landingY) {
+                const planeRight = x + plane.offsetWidth;
+                const runwayRight = runwayX + runway.offsetWidth;
+
+                // Перевіряємо, чи весь літак знаходиться над смугою.
+                if (x >= runwayX && planeRight <= runwayRight) {
+                    score = score + 1;
+                    message.textContent =
+                        "Успішна посадка! Спробуй ще раз.";
+                } else {
+                    lives = lives - 1;
+                    message.textContent =
+                        "Літак промахнувся. Спробуй наступну посадку!";
+                }
+
+                if (lives <= 0) {
+                    y = landingY;
+                    render();
+                    finishGame();
+                    return;
+                }
+
+                newRound();
+            }
+
+            render();
+            frameId = requestAnimationFrame(update);
+        }
+
+        function startGame() {
+            // Скасовуємо старий цикл перед новим запуском.
+            cancelAnimationFrame(frameId);
+
+            score = 0;
+            lives = 3;
+            running = true;
+            lastTime = null;
+
+            keys.left = false;
+            keys.right = false;
+
+            leftButton.disabled = false;
+            rightButton.disabled = false;
+
+            startButton.textContent = "Почати заново";
+            message.textContent = "Спрямуй літак на злітну смугу!";
+
+            newRound();
+            frameId = requestAnimationFrame(update);
+        }
+
+        startButton.addEventListener("click", startGame);
+
+        // Екранні кнопки рухають літак на один крок.
+        leftButton.addEventListener("click", function () {
+            movePlane(-25);
+        });
+
+        rightButton.addEventListener("click", function () {
+            movePlane(25);
+        });
+
+        // Клавіатура дозволяє рухатися безперервно.
+        document.addEventListener("keydown", function (event) {
+            if (!running) {
+                return;
+            }
+
+            if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                keys.left = true;
+            }
+
+            if (event.key === "ArrowRight") {
+                event.preventDefault();
+                keys.right = true;
+            }
+        });
+
+        document.addEventListener("keyup", function (event) {
+            if (event.key === "ArrowLeft") {
+                keys.left = false;
+            }
+
+            if (event.key === "ArrowRight") {
+                keys.right = false;
+            }
+        });
+
+        // При переході на іншу вкладку прибираємо затиснуті клавіші.
+        window.addEventListener("blur", function () {
+            keys.left = false;
+            keys.right = false;
+        });
+
+        document.addEventListener("visibilitychange", function () {
+            lastTime = null;
+        });
+
+        // Підлаштовуємо координати під нову ширину поля.
+        window.addEventListener("resize", function () {
+            x = Math.max(
+                0,
+                Math.min(x, field.clientWidth - plane.offsetWidth)
+            );
+
+            runwayX = Math.max(
+                0,
+                Math.min(runwayX, field.clientWidth - runway.offsetWidth)
+            );
+
+            render();
+        });
+
+        newRound();
+    </script>
+</body>
+
+</html>
